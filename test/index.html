@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Простая игра на JavaScript</title>
+    <style>
+        .game-container {
+            display: flex;
+            flex-wrap: wrap;
+            width: 400px;
+            height: 400px;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            border: 1px solid black;
+        }
+        .hero {
+            background-color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="game-container"></div>
+
+    <script>
+        // Создаем игровое поле
+        const gameContainer = document.getElementById('game-container');
+        const gridSize = 10;
+
+        for (let i = 0; i < gridSize * gridSize; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            gameContainer.appendChild(cell);
+        }
+
+        // Размещаем героя на поле
+        const cells = document.getElementsByClassName('cell');
+        const heroIndex = 0;
+        cells[heroIndex].classList.add('hero');
+
+        // Функция для обработки нажатий на клавиатуру
+        document.addEventListener('keydown', (event) => {
+            cells[heroIndex].classList.remove('hero'); // Удаляем текущую позицию героя
+
+            switch (event.key) {
+                case 'ArrowUp':
+                    heroIndex = (heroIndex - gridSize + gridSize * gridSize) % (gridSize * gridSize);
+                    break;
+                case 'ArrowDown':
+                    heroIndex = (heroIndex + gridSize) % (gridSize * gridSize);
+                    break;
+                case 'ArrowLeft':
+                    heroIndex = (heroIndex - 1 + gridSize) % gridSize === gridSize - 1 ? heroIndex : heroIndex - 1;
+                    break;
+                case 'ArrowRight':
+                    heroIndex = (heroIndex + 1) % gridSize === 0 ? heroIndex : heroIndex + 1;
+                    break;
+            }
+
+            cells[heroIndex].classList.add('hero'); // Добавляем новую позицию героя
+        });
+    </script>
+</body>
+</html>
