@@ -1,10 +1,43 @@
 var BOARD_COLS = 40;
 var BOARD_ROWS = 24;
 var CELL_SIZE = 25;
+
 var PERSON_HEALTH = 100;
 var PERSON_DAMAGE = 10;
+
 var ENEMY_HEALTH = 80;
 var ENEMY_DAMAGE = 5;
+var ENEMY_COUNT = 10;
+
+var SWORD_COUNT = 2;
+var HEALTH_POITON_COUNT = 10;
+var SWORD_DAMAGE = 10;
+var HEALTH_POITON_HEAL = 10;
+
+var GAME_SETTINGS = {
+    board: { width: 40, height: 24 },
+    cell: { width: 25, height: 25 },
+    person: {
+        health: 100,
+        damage: 10,
+        count: 1,
+    },
+    enemie: {
+        health: 80,
+        damage: 5,
+        count: 10,
+    },
+    items: {
+        sword: {
+            count: 2,
+            increasesDamage: 10,
+        },
+        healthPotion: {
+            count: 10,
+            increasesHealth: 10,
+        }
+    }
+}
 
 var FOUR_DIRECTION = {
     Left: {dx: -1, dy: 0},
@@ -42,9 +75,21 @@ function randInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function randBool() {
+    return randInt(0, 1) === 0
+}
+
+function Rect(x, y, width, height) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+}
+
 function generateRooms() {
     var rooms = [];
     var MAX_ROOMS_COUNT = 10;
+    var MIN_ROOMS_COUNT = 5;
     var MAX_ROOMS_SIZE = 8;
     var MIN_ROOMS_SIZE = 3;
     var MAX_TRIES_PER_ROOM = 100;
@@ -60,7 +105,7 @@ function generateRooms() {
 
     var tries = MAX_TRIES_PER_ROOM;
     var iterations = 0;
-    while (rooms.length < MAX_ROOMS_COUNT && tries-- > 0) {
+    while (rooms.length < randInt(MIN_ROOMS_COUNT, MAX_ROOMS_COUNT) && tries-- > 0) {
         iterations++;
         var height = MAX_ROOMS_SIZE; // randInt(MIN_ROOMS_SIZE, MAX_ROOMS_SIZE);
         var width = MAX_ROOMS_SIZE; // randInt(MIN_ROOMS_SIZE, MAX_ROOMS_SIZE);
@@ -89,48 +134,36 @@ function generatePaths(rooms) {
     var MAX_COUNT_PATHS = 5;
     var MIN_COUNT_PATHS = 3;
 
-    var paths = [];
-    for (var room of rooms) {
-        var countPaths = randInt(MIN_COUNT_PATHS, MAX_COUNT_PATHS);
-
+    function getPath(room, isHorizontal) {
+        if (isHorizontal)
+            return new Rect(0, randInt(room.y, room.y + room.height - 1), BOARD_COLS, 1);
+        return new Rect(randInt(room.x, room.x + room.width - 1), 0, 1, BOARD_ROWS);
     }
-    return paths;
-}
-
-function generatePaths2(rooms) {
-    var MAX_COUNT_PATHS = 5;
-    var MIN_COUNT_PATHS = 3;
 
     var paths = [];
     for (var room of rooms) {
-        var countPaths = randInt(MIN_COUNT_PATHS, MAX_COUNT_PATHS);
-        for (var i = 0; i < countPaths - 1; i++) {
-            var isHorizontal = randInt(0, 1) === 1;
-            paths.push({
-                x: isHorizontal ? 0 : randInt(room.x, room.x + room.width),
-                y: isHorizontal ? randInt(room.y, room.y + room.height) : 0,
-                width: isHorizontal ? BOARD_COLS : 1, 
-                height: isHorizontal ? 1 : BOARD_ROWS
-            });
-        }
+        paths.push(getPath(room, true), getPath(room, false));
+        var countPaths = randInt(MIN_COUNT_PATHS, MAX_COUNT_PATHS) - 2;
+        paths.concat(Array(countPaths).fill().map(function () { return getPath(room, randBool())}));
     }
-    console.log(paths);
+    
     return paths;
 }
 
-function fillPart(map, rect, fillObject) {
+function fillPart(map, rect, objectType) {
+    console.log(map, rect, objectType);
     for (var y = rect.y; y < rect.y + rect.height; y++)
         for (var x = rect.x; x < rect.x + rect.width; x++) {
-            map[y][x] = new fillObject(x, y);
+            map[y][x] = new objectType(x, y);
         }
 }
 
 function generateMap() {
-    var tileMap = Array(BOARD_ROWS).fill().map(()=>Array(BOARD_COLS).fill());
+    var tileMap = Array(BOARD_ROWS).fill().map(function () { return Array(BOARD_COLS).fill() });
     fillPart(tileMap, {x: 0, y: 0, width: BOARD_COLS, height: BOARD_ROWS}, Wall);
     var rooms = generateRooms();
     for (var room of rooms) fillPart(tileMap, room, Floor);
-    for (var path of generatePaths2(rooms)) fillPart(tileMap, path, Floor);
+    for (var path of generatePaths(rooms)) fillPart(tileMap, path, Floor);
     return tileMap;
 }
 
@@ -142,18 +175,62 @@ function Game() {
 }
 
 Game.prototype.init = function() {
-    this.initMap();
-
-    this.person = new Person(2, 3, PERSON_HEALTH, PERSON_DAMAGE);
-    this.enemies = [new Enemy(0, 0, ENEMY_HEALTH, ENEMY_DAMAGE), new Enemy(0, 1, ENEMY_HEALTH, ENEMY_DAMAGE)];
-    this.items = [new Sword(3, 3, 5), new HealthPotion(4, 1, 10)];
-
     document.addEventListener("keydown", this.keyboardHandler.bind(this));
-    this.render();
+    this.restart();
 };
 
-Game.prototype.initMap = function() {
+Game.prototype.gameOver = function() {
+    alert("Вы проиграли");
+    this.restart();
+}
+
+Game.prototype.restart = function() {
     this.tileMap = generateMap();
+    this.placeObjects();
+    this.render();
+}
+
+// function makeGameObject(objectType, x, y) {
+//     switch (objectType) {
+//         case Wall: return new Wall(x, y);
+//         case Tile: return new Tile(x, y);
+//         case Sword: return new Sword(x, y, GAME_SETTINGS.items.sword.increasesDamage);
+//         case HealthPotion: return new HealthPotion(x, y, GAME_SETTINGS.items.healthPotion.increasesHealth);
+//         case Enemy: return new Enemy(x, y, GAME_SETTINGS.enemie.health, GAME_SETTINGS.enemie.damage);
+//         case Person: return new Person(x, y, GAME_SETTINGS.person.health, GAME_SETTINGS.person.damage);
+//         default:
+//             throw new Error("Invalid objectType: " + objectType.toString());
+//     }
+// }
+
+Game.prototype.placeObjects = function() {
+    var floorCells = this.tileMap.flat().filter(function (tile) { return tile instanceof Floor; });
+    console.log(floorCells);
+    var rIndex = randInt(0, floorCells.length - 1);
+    this.person = new Person(floorCells[rIndex].x, floorCells[rIndex].y, PERSON_HEALTH, PERSON_DAMAGE);
+    floorCells.splice(rIndex, 1);
+
+    this.enemies = Array(ENEMY_COUNT).fill().map(function(){
+        var rIndex = randInt(0, floorCells.length - 1);
+        var enemy = new Enemy(floorCells[rIndex].x, floorCells[rIndex].y, ENEMY_HEALTH, ENEMY_DAMAGE);
+        floorCells.splice(rIndex, 1);
+        return enemy;
+    });
+
+    this.items = Array(SWORD_COUNT).fill().map(function(){
+        var rIndex = randInt(0, floorCells.length - 1);
+        var sword = new Sword(floorCells[rIndex].x, floorCells[rIndex].y, SWORD_DAMAGE);
+        floorCells.splice(rIndex, 1);
+        return sword;
+    });
+    console.log(floorCells);
+    this.items = this.items.concat(Array(HEALTH_POITON_COUNT).fill().map(function(){
+        var rIndex = randInt(0, floorCells.length - 1);
+        var healthPoition = new HealthPotion(floorCells[rIndex].x, floorCells[rIndex].y, HEALTH_POITON_HEAL);
+        floorCells.splice(rIndex, 1);
+        return healthPoition;
+    }));
+    console.log(this.items);
 }
 
 Game.prototype.tryMoveEntity = function(entity, direction) {
@@ -177,10 +254,11 @@ Game.prototype.tryAttackEnemies = function() {
     var closestEnemies = this.enemies.filter(e => 
         Math.abs(e.x - this.person.x) <= 1 
         && Math.abs(e.y - this.person.y) <= 1 
-        && e.isDead() === false);
+        && e.isDead() === false
+    );
     for (var enemy of closestEnemies)
         this.person.applyAttack(enemy);
-    this.enemies = this.enemies.filter(e => e.isDead() === false);
+    this.enemies = this.enemies.filter(function (e) { return e.isDead() === false });
 }
 
 Game.prototype.moveEnemies = function() {
@@ -253,9 +331,4 @@ Game.prototype.render = function() {
     for (var enemy of this.enemies)
         board.appendChild(enemy.getDOMElement(CELL_SIZE));
     board.appendChild(this.person.getDOMElement(CELL_SIZE));
-}
-
-Game.prototype.gameOver = function() {
-    alert("Вы проиграли");
-    this.init();
 }
