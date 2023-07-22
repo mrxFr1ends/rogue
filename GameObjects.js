@@ -60,7 +60,6 @@ Item.prototype.applyEffect = function(gameObject) {
     throw new Error("Abstract method applyEffect called");
 }
 Item.prototype.tryTake = function(gameObject) {
-    console.log(this.isAutoEffect)
     if (this.isAutoEffect)
         this.applyEffect(gameObject);
     else this.isTaken = true;
@@ -72,7 +71,6 @@ Item.prototype.getDOMElement = function(size) {
     div.style.width = size + "px";
     div.style.height = size + "px";
     div.classList.add('item', this.sprite);
-    console.log(this.isAutoEffect);
     return div;
 }
 
@@ -98,7 +96,6 @@ HealthPotion.prototype = Object.create(Item.prototype);
 HealthPotion.prototype.constructor = HealthPotion;
 HealthPotion.prototype.applyEffect = function(person) {
     person.affectHealth(this.health);
-    console.log(123444444);
 }
 
 function Entity(x, y, maxHP, damage) {

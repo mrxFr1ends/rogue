@@ -85,13 +85,10 @@ Game.prototype.tryAttackEnemies = function() {
 Game.prototype.tryPickUpItem = function() {
     for (var i = 0; i < this.items.length; i++)
         if (this.items[i].x === this.person.x && this.items[i].y === this.person.y) {
-            // this.items[i].applyEffect(this.person);
             this.items[i].tryTake(this.person);
             if (this.items[i].isTaken)
                 this.inventory.push(this.items[i]);
-            console.log(this.inventory)
             this.items.splice(i, 1);
-            console.log(this.inventory)
             break;
         }
 }
@@ -148,7 +145,6 @@ Game.prototype.clickItemHandler = function(itemIndex) {
     return function() {
         this.inventory[itemIndex].applyEffect(this.person); 
         this.inventory.splice(itemIndex, 1);
-        console.log(itemIndex);
         this.render();
     }.bind(this);
 }
