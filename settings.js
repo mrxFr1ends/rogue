@@ -2,7 +2,7 @@ var SETTINGS = {
     board: { 
         width: 40, 
         height: 24,
-        cell: { size: 23 }
+        cell: { size: 28 }
     }, 
     person: {
         health: 100,
