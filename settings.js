@@ -1,6 +1,9 @@
 var SETTINGS = {
-    board: { width: 40, height: 24}, 
-    cell: { size: 25 },
+    board: { 
+        width: 40, 
+        height: 24,
+        cell: { size: 23 }
+    }, 
     person: {
         health: 100,
         damage: 10,
@@ -28,5 +31,9 @@ var SETTINGS = {
     },
     paths: { 
         count: { max: 5, min: 3}
+    },
+    inventory: {
+        cell: { size: 32 },
+        items: { count: { max: 25 } }
     }
 };

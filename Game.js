@@ -41,6 +41,7 @@ function Game() {
     this.person = {};
     this.items = [];
     this.enemies = [];
+    this.inventory = [];
 }
 Game.prototype.init = function() {
     document.addEventListener("keydown", this.keyboardHandler.bind(this));
@@ -84,8 +85,13 @@ Game.prototype.tryAttackEnemies = function() {
 Game.prototype.tryPickUpItem = function() {
     for (var i = 0; i < this.items.length; i++)
         if (this.items[i].x === this.person.x && this.items[i].y === this.person.y) {
-            this.items[i].applyEffect(this.person);
+            // this.items[i].applyEffect(this.person);
+            this.items[i].tryTake(this.person);
+            if (this.items[i].isTaken)
+                this.inventory.push(this.items[i]);
+            console.log(this.inventory)
             this.items.splice(i, 1);
+            console.log(this.inventory)
             break;
         }
 }
@@ -138,14 +144,38 @@ Game.prototype.keyboardHandler = function(event) {
     this.render();
 }
 
-Game.prototype.render = function() {
+Game.prototype.clickItemHandler = function(itemIndex) {
+    return function() {
+        this.inventory[itemIndex].applyEffect(this.person); 
+        this.inventory.splice(itemIndex, 1);
+        console.log(itemIndex);
+        this.render();
+    }.bind(this);
+}
+
+Game.prototype.boardRender = function() {
     var board = document.querySelector('.field');
     clearNode(board);
     for (var i = 0; i < this.tileMap.length; i++) {
         for (var j = 0; j < this.tileMap[i].length; j++)
-            board.appendChild(this.tileMap[i][j].getDOMElement(SETTINGS.cell.size));
+            board.appendChild(this.tileMap[i][j].getDOMElement(SETTINGS.board.cell.size));
     }
-    for (var item of this.items) board.appendChild(item.getDOMElement(SETTINGS.cell.size));
-    for (var enemy of this.enemies) board.appendChild(enemy.getDOMElement(SETTINGS.cell.size));
-    board.appendChild(this.person.getDOMElement(SETTINGS.cell.size));
+    for (var item of this.items) board.appendChild(item.getDOMElement(SETTINGS.board.cell.size));
+    for (var enemy of this.enemies) board.appendChild(enemy.getDOMElement(SETTINGS.board.cell.size));
+    board.appendChild(this.person.getDOMElement(SETTINGS.board.cell.size));
+}
+
+Game.prototype.inventoryRender = function() {
+    var inv = document.querySelector('.inventory');
+    clearNode(inv);
+    for (var i = 0; i < this.inventory.length; i++) {
+        var divItem = this.inventory[i].getDOMElement(SETTINGS.inventory.cell.size)
+        divItem.onclick = this.clickItemHandler(i);
+        inv.appendChild(divItem);
+    }
+}
+
+Game.prototype.render = function() {
+    this.boardRender();
+    this.inventoryRender();
 }

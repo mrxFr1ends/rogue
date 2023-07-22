@@ -50,16 +50,35 @@ Floor.prototype.constructor = Floor;
 
 function Item(x, y) {
     GameObject.call(this, x, y);
-    this.is_block = false;
+    this.isBlock = false;
+    this.isAutoEffect = null;
+    this.isTaken = false;
 }
 Item.prototype = Object.create(GameObject.prototype);
 Item.prototype.constructor = Item;
 Item.prototype.applyEffect = function(gameObject) {
     throw new Error("Abstract method applyEffect called");
 }
+Item.prototype.tryTake = function(gameObject) {
+    console.log(this.isAutoEffect)
+    if (this.isAutoEffect)
+        this.applyEffect(gameObject);
+    else this.isTaken = true;
+}
+Item.prototype.getDOMElement = function(size) {
+    if (this.isTaken === false)
+        return GameObject.prototype.getDOMElement.call(this, size);
+    var div = document.createElement('div');
+    div.style.width = size + "px";
+    div.style.height = size + "px";
+    div.classList.add('item', this.sprite);
+    console.log(this.isAutoEffect);
+    return div;
+}
 
 function Sword(x, y, damage) {
     Item.call(this, x, y);
+    this.isAutoEffect = true;
     this.sprite = SPRITE.Sword;
     this.damage = damage;
 }
@@ -71,6 +90,7 @@ Sword.prototype.applyEffect = function(person) {
 
 function HealthPotion(x, y, health) {
     Item.call(this, x, y);
+    this.isAutoEffect = false;
     this.sprite = SPRITE.HealthPotion;
     this.health = health;
 }
@@ -78,6 +98,7 @@ HealthPotion.prototype = Object.create(Item.prototype);
 HealthPotion.prototype.constructor = HealthPotion;
 HealthPotion.prototype.applyEffect = function(person) {
     person.affectHealth(this.health);
+    console.log(123444444);
 }
 
 function Entity(x, y, maxHP, damage) {
